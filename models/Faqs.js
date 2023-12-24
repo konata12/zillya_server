@@ -2,11 +2,11 @@ import mongoose from 'mongoose'
 
 const FaqsSchema = new mongoose.Schema(
     {
-      Title: {
+      title: {
         type: String,
         required: true,
       },
-      Text: {
+      text: {
         type: String,
         required: true,
       }
@@ -14,4 +14,4 @@ const FaqsSchema = new mongoose.Schema(
     { timestamps: true },
 )
 
-export default mongoose.model('User', FaqsSchema)
+export default mongoose.model('Faqs', FaqsSchema)

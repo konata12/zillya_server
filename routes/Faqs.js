@@ -1,15 +1,13 @@
 import { Router } from 'express';
-import { createFaq } from '../controllers/Faqs.js';
+import { createFaq, deleteFaq, getFaqs } from '../controllers/Faqs.js';
 
 
 const router = new Router()
 
-router.post('/', createFaq)
+router.get('/', getFaqs)
 
-// router.get('/:id', GetMe)
+router.post('/faq', createFaq)
 
-// router.get('/lecture/:id', GetLecture)
-
-// router.post('/lecture', CreateLecture)
+router.delete('/faq', deleteFaq)
 
 export default router
