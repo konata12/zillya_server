@@ -1,6 +1,7 @@
 import express  from "express";
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import cors from 'cors'
 
 //routes import
 import usersRoute from './routes/User.js';
@@ -16,6 +17,7 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 // const PORT = 5000
 
 //middlewares
+app.use(cors())
 app.use(express.json());
 
 

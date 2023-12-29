@@ -41,7 +41,6 @@ export const Register = async (req, res) => {
   }
 }
 
-
 // login user
 export const Login = async (req, res) => {
   try {
@@ -84,7 +83,7 @@ export const Login = async (req, res) => {
   }
 }
 
-// //get me
+//get me
 export const GetMe = async (req, res) => {
   function getIdFromUrl(url) {
     const parts = url.split('/');
