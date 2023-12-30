@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 //Register user
 export const Register = async (req, res) => {
   try {
+    console.log('register')
     console.log(req.body);
     const { name, surname, email, password } = req.body
 
@@ -54,7 +55,12 @@ export const Register = async (req, res) => {
 // login user
 export const Login = async (req, res) => {
   try {
+    console.log('login')
+    console.log(req.body)
     const { email, password } = req.body
+
+    console.log(email)
+    console.log(password)
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -105,7 +111,6 @@ export const GetMe = async (req, res) => {
   // const reqId = getIdFromUrl(req.url)
   try {
     const user = await User.findById(req.userId);
-    console.log(user)
 
     if (!user) {
       return res.json({
@@ -118,6 +123,9 @@ export const GetMe = async (req, res) => {
     }, process.env.JWT_SECRET,
       { expiresIn: '30d' },
     )
+
+    console.log(user)
+    console.log(token)
 
     res.json({
       user, token
