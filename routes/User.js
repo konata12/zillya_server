@@ -5,14 +5,12 @@ import { checkAuth } from '../utils/checkAuth.js';
 
 const router = new Router()
 
-router.post('/register', Register)
+router.post('/', Register)
 
-router.post('/login', Login)
+router.post('/:email', Login)
 
-router.get('/me', checkAuth, GetMe)
+router.get('/user', checkAuth, GetMe)
 
 router.patch('/:id', checkAuth, updateInfo)
-
-
 
 export default router
