@@ -26,6 +26,7 @@ export const Register = async (req, res) => {
       email,
       password: hash,
       Orders: [],
+      staff: false
     })
 
     const token = jwt.sign({
@@ -73,7 +74,7 @@ export const Login = async (req, res) => {
     const isPasswordCorrect = await bcrypt.compare(password, user.password)
 
     if (!isPasswordCorrect) {
-      res.json({
+      return res.json({
         message: "incorrect password",
         status: 401,
       })
@@ -86,29 +87,21 @@ export const Login = async (req, res) => {
     )
 
     if (!token) {
-      res.json({ message: 'something went wrong', status: 500 })
+      return res.json({ message: 'something went wrong', status: 500 })
     }
 
-    res.json({
+    return res.json({
       token, user, message: 'You successfully entered the system', status: 201,
     })
 
   }
   catch (error) {
-    res.json({ message: 'something went wrong', status: 500 })
+    return res.json({ message: 'something went wrong', status: 500 })
   }
 }
 
 //get me
 export const GetMe = async (req, res) => {
-  // function getIdFromUrl(url) {
-  //   const parts = url.split('/');
-  //   const idWithColon = parts[parts.length - 1];
-  //   const id = idWithColon.replace(':', ''); // замінити ":" на порожній рядок
-  //   return (id);
-  // }
-
-  // const reqId = getIdFromUrl(req.url)
   try {
     const user = await User.findById(req.userId);
 
@@ -123,6 +116,8 @@ export const GetMe = async (req, res) => {
     }, process.env.JWT_SECRET,
       { expiresIn: '30d' },
     )
+
+    console.log(user);
 
     console.log(user)
     console.log(token)

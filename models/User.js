@@ -46,6 +46,10 @@ const UserSchema = new mongoose.Schema(
         type: Array,
         required: true,
       },
+      staff: {
+        type: Boolean,
+        required: true,
+      },
     },
     { timestamps: true },
 )
