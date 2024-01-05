@@ -11,6 +11,7 @@ import Item from "../models/Items.js";
 //     }
 // };
 
+// pagination
 export const getItems = async (req, res) => {
     try {
         // basic
@@ -19,19 +20,19 @@ export const getItems = async (req, res) => {
 
         // sorting parameters
         const parameter = req.query.parameter === undefined ?
-            '' : req.query.parameter
+            'default' : req.query.parameter
         const category = req.query.category === undefined ?
-            'default' : req.query.category
+            'all' : req.query.category
         const page = req.query.page === undefined ?
             1 : +req.query.page
-        const keyword = req.query.keyword === undefined ?
-            '' : req.query.keyword
 
-        console.log(parameter, category, page, !!keyword.lenght)
+        console.log(parameter, category, page)
 
         // number of items
-        const itemsNum = keyword.lenght ? await Item.countDocuments({ title: { '$regex': new RegExp(`${keyword}`) } }) :
-            await Item.estimatedDocumentCount()
+        const countCategory = category === 'all' ? {} :
+            { type: category }
+        const itemsNum = category === 'all' ? await Item.estimatedDocumentCount() :
+            await Item.countDocuments(countCategory)
         // number of pages
         const pagesNum = Math.ceil(itemsNum / itemsOnPage)
 
@@ -47,6 +48,7 @@ export const getItems = async (req, res) => {
 
         // category validation
         switch (category) {
+            case 'all':
             case 'vape':
             case 'spray':
             case 'cosmetic':
@@ -79,6 +81,15 @@ export const getItems = async (req, res) => {
                 })
         }
 
+        // skip
+        const skip = (page - 1) * itemsOnPage
+        console.log(skip)
+
+        // category
+        const matchCategory = category === 'all' ? {} :
+            { type: category }
+        console.log(matchCategory)
+
         // sorting
         // get - or + to define sort direction, d means default so no direction
         const parameterSelector = parameter.slice(0, 1) === 'd' ? 'default' :
@@ -88,29 +99,70 @@ export const getItems = async (req, res) => {
             ''
         // get parameter for sorting: price, title or '' if default
         const sortField = parameter.slice(0, 1) === 'd' ? 'default' :
-            parameter.slice(1) === 'price'
+            parameter.slice(1)
         // setting sort object
         const sort = {}
-        sortField === 'default' ? '' :
-            sort[sortField] = sortValue
+        switch (sortField) {
+            case 'price':
+                sort.discountPrice = sortValue
+                break;
+            case 'title':
+                sort.titleFstPart = sortValue
+                sort.titleScndPart = sortValue
+                break;
 
-        console.log(parameterSelector === '-' || parameterSelector === '+')
+            default:
+                break;
+        }
 
-        console.log(parameter.slice(0, 1))
-        console.log('parameterSelector:', parameterSelector)
-        console.log('sortSelector:', sortValue)
-        console.log('sortField:', sortField)
+        // console.log(parameter.slice(0, 1))
+        // console.log('parameterSelector:', parameterSelector)
+        // console.log('sortSelector:', sortValue)
+        // console.log('sortField:', sortField)
         console.log('sort:', sort)
 
         // get filtered items from db
-        const items = await Item.find()
-            .sort(sort)
-            .skip((page - 1) * itemsOnPage)
-            .limit(itemsOnPage)
+        const items = await Item.aggregate([
+            // match category
+            {
+                $match: matchCategory
+            },
+            // get object of default choice of item
+            {
+                $addFields: {
+                    defaultChoice: {
+                        $arrayElemAt: ["$choice", 0]
+                    },
+                }
+            },
+            // get discount price of item
+            {
+                $addFields: {
+                    discountPrice: {
+                        $multiply: ["$defaultChoice.price", {
+                            $divide: [{
+                                $subtract: [100, "$defaultChoice.discount"]
+                            }, 100]
+                        }]
+                    },
+                }
+            },
+            {
+                $sort: sort
+            },
+            {
+                $skip: skip
+            },
+            {
+                $limit: itemsOnPage
+            }
+        ])
 
-        // console.log(items)
-        console.log('end')
-        res.status(200).json(items);
+        console.log('send items')
+        res.status(200).json({
+            itemsNum,
+            items
+        });
     } catch (error) {
         res.status(500).json({ message: `Something went wrong: ${error}` });
     }
