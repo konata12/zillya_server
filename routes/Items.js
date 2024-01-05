@@ -1,12 +1,14 @@
 import { Router } from 'express';
-import { getItems, getItem, createItem, deleteItem, getItemsSorted } from '../controllers/Items.js';
+import { getItems, getItem, createItem, deleteItem } from '../controllers/Items.js';
+// import { getItems, getItem, createItem, deleteItem, getItemsSorted } from '../controllers/Items.js';
 
 
 const router = new Router()
 
 router.get('/', getItems)
 
-router.get('/sort/:sort/sortOpton/:sortOption/category/:category', getItemsSorted)
+router.get('/shop', getItems)
+// router.get('/sort/:sort/sortOpton/:sortOption/category/:category', getItemsSorted)
 
 // /sortOpton/:sortOption/sort/:sort/category/:category
 // sortOpton - (по якій позиції сортувати)
