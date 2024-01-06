@@ -117,11 +117,6 @@ export const GetMe = async (req, res) => {
       { expiresIn: '30d' },
     )
 
-    console.log(user);
-
-    console.log(user)
-    console.log(token)
-
     res.json({
       user, token
     })
