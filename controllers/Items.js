@@ -19,9 +19,9 @@ export const getItems = async (req, res) => {
         // plus in query = %2B
 
         // sorting parameters
-        const parameter = req.query.parameter === undefined ?
+        const parameter = req.query.parameter === undefined || req.query.parameter === '' ?
             'default' : req.query.parameter
-        const category = req.query.category === undefined ?
+        const category = req.query.category === undefined || req.query.category === '' ?
             'all' : req.query.category
         const page = req.query.page === undefined || req.query.page === '' ?
             1 : +req.query.page
