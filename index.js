@@ -7,7 +7,10 @@ import cors from 'cors'
 import usersRoute from './routes/User.js';
 import faqsRoute from './routes/Faqs.js';
 import itemsRoute from './routes/Items.js';
+
+//admin routes
 import AdminUsersRoute from "./routes/admins/Users.js";
+import AdminItemsRoute from "./routes/admins/Items.js";
 
 const app = express();
 dotenv.config();
@@ -29,6 +32,7 @@ app.use('/api/items', itemsRoute)
 
 //admins route 
 app.use('/api/admin/users', AdminUsersRoute)
+app.use('/api/admin/items', AdminItemsRoute)
 
 
 //start func

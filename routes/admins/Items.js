@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getItems, getItem } from '../controllers/Items.js';
+import { getItems, getItem, createItem, deleteItem } from '../../controllers/admins/Items.js';
 // import { getItems, getItem, createItem, deleteItem, getItemsSorted } from '../controllers/Items.js';
 
 
@@ -7,7 +7,7 @@ const router = new Router()
 
 router.get('/', getItems)
 
-router.get('/shop', getItems)
+// router.get('/shop', getItems)
 // router.get('/sort/:sort/sortOpton/:sortOption/category/:category', getItemsSorted)
 
 // /sortOpton/:sortOption/sort/:sort/category/:category
@@ -18,9 +18,9 @@ router.get('/shop', getItems)
 
 router.get('/item/:id', getItem)
 
-// router.post('/item', createItem)
+router.post('/item', createItem)
 
-// router.delete('/item', deleteItem)
+router.delete('/item', deleteItem)
 
 
 export default router

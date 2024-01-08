@@ -132,14 +132,7 @@ export const getItems = async (req, res) => {
             default:
                 break;
         }
-
-        // console.log(parameter.slice(0, 1))
-        // console.log('parameterSelector:', parameterSelector)
-        // console.log('sortSelector:', sortValue)
-        // console.log('sortField:', sortField)
         console.log('sort:', sort)
-
-        // adding pagination to aggregate
         aggregateQuery.push({ $skip: skip })
         aggregateQuery.push({ $limit: itemsOnPage })
 
@@ -165,42 +158,6 @@ export const getItem = async (req, res) => {
         const item = await Item.findById(id)
 
         res.status(200).json({ item });
-    } catch (error) {
-        res.status(500).json({ message: `Something went wrong: ${error}` });
-    }
-};
-
-export const createItem = async (req, res) => {
-    try {
-        const { img, titleFstPart, titleScndPart, subtitle, choice, aboutFrstPart, aboutScndPart, type } = req.body;
-        const newItem = new Item({
-            img,
-            titleFstPart,
-            titleScndPart,
-            subtitle,
-            choice,
-            aboutFrstPart,
-            aboutScndPart,
-            type,
-        });
-
-        console.log(newItem);
-
-        await newItem.save();
-
-        res.status(200).json({ newItem });
-    } catch (error) {
-        res.status(500).json({ message: `Something went wrong: ${error}` });
-    }
-};
-
-export const deleteItem = async (req, res) => {
-    try {
-        const { id } = req.body;
-
-        const deletedItem = await Item.findByIdAndDelete({ id })
-
-        res.status(200).json({ deletedItem });
     } catch (error) {
         res.status(500).json({ message: `Something went wrong: ${error}` });
     }
