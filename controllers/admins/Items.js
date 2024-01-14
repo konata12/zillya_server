@@ -152,6 +152,44 @@ export const createItem = async (req, res) => {
     }
 };
 
+export const changeItem = async (req, res) => {
+    try {
+        const { _id, img, titleFstPart, titleScndPart, subtitle, choice, aboutFrstPart, aboutScndPart, type } = req.body;
+        const changingItem = await Item.findById({_id})
+
+        console.log('====================================');
+        console.log(changingItem);
+        console.log('====================================');
+        // const newItem = new Item({
+        //     img,
+        //     titleFstPart,
+        //     titleScndPart,
+        //     subtitle,
+        //     choice,
+        //     aboutFrstPart,
+        //     aboutScndPart,
+        //     type,
+        // });
+        if (changingItem) {
+            changingItem.img = img,
+            changingItem.titleFstPart = titleFstPart,
+            changingItem.titleScndPart = titleScndPart,
+            changingItem.subtitle = subtitle,
+            changingItem.choice = choice,
+            changingItem.aboutFrstPart = aboutFrstPart,
+            changingItem.aboutScndPart = aboutScndPart,
+            changingItem.type = type
+        }
+
+        console.log(changingItem);
+        await changingItem.save();
+        res.status(200).json({ changingItem });
+            
+    } catch (error) {
+        res.status(500).json({ message: `Something went wrong: ${error}` });
+    }
+};
+
 export const deleteItem = async (req, res) => {
     try {
         const { id } = req.body;
