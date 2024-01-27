@@ -1,5 +1,12 @@
 import Item from "../models/Items.js";
 
+// SERVICES
+import {
+    createObjectToCountItems,
+    countItems,
+    countPages,
+} from '../services/Items.service.js'
+
 // pagination
 export const getItems = async (req, res) => {
     try {
@@ -8,22 +15,18 @@ export const getItems = async (req, res) => {
         // plus in query = %2B
 
         // sorting parameters
-        const parameter = req.query.parameter === undefined || req.query.parameter === '' ?
-            'default' : req.query.parameter
-        const category = req.query.category === undefined || req.query.category === '' ?
-            'all' : req.query.category
-        const page = req.query.page === undefined || req.query.page === '' ?
-            1 : +req.query.page
+        const parameter = req.query.parameter || 'default';
+        const category = req.query.category || 'all';
+        const page = +req.query.page || 1;
 
         console.log(parameter, category, page)
 
         // number of items
-        const countCategory = category === 'all' ? {} :
-            { type: category }
-        const itemsNum = category === 'all' ? await Item.estimatedDocumentCount() :
-            await Item.countDocuments(countCategory)
+        const countCategory = createObjectToCountItems(category)
+        const itemsNum = await countItems(category, countCategory)
+
         // number of pages
-        const pagesNum = Math.ceil(itemsNum / itemsOnPage)
+        const pagesNum = countPages(itemsNum, itemsOnPage)
 
         console.log('items:', itemsNum)
         console.log('pages:', pagesNum)
@@ -36,6 +39,20 @@ export const getItems = async (req, res) => {
         }
 
         // category validation
+        const catigories = {
+            all: 'all',
+            vape: 'vape',
+            spray: 'spray',
+            cosmetic: 'cosmetic',
+            tablets: 'tablets',
+            pets: 'pets',
+            concentrates: 'concentrates',
+            oil: 'oil',
+            food: 'food',
+            drinks: 'drinks',
+            devices: 'devices',
+        }
+        console.log('anus',catigories[category])
         switch (category) {
             case 'all':
             case 'vape':
@@ -153,7 +170,7 @@ export const getItems = async (req, res) => {
 export const getItem = async (req, res) => {
     try {
         const id = req.params.id
-        
+
         console.log("getItem");
         const item = await Item.findById(id)
 

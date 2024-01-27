@@ -1,6 +1,8 @@
 import User from '../models/User.js'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import { v4 as uuidv4 } from 'uuid'
+
+// import bcrypt from 'bcryptjs'
+// import jwt from 'jsonwebtoken'
 
 //Register user
 export const Register = async (req, res) => {
@@ -18,32 +20,14 @@ export const Register = async (req, res) => {
       })
     }
 
-    const salt = bcrypt.genSaltSync(10)
-    const hash = bcrypt.hashSync(password, salt)
-    const newUser = new User({
-      name,
-      surname,
-      email,
-      password: hash,
-      Orders: [],
-      staff: false
-    })
+    const sessionId = uuidv4()
 
-    const token = jwt.sign({
-      id: newUser._id,
-    }, process.env.JWT_SECRET,
-      { expiresIn: '30d' },
-    )
+    res.set('Set-Cookie', `session=${sessionId}`)
 
-    if (!token) {
-      res.json({ message: 'something went wrong', status: 500 })
-    }
-
-    await newUser.save()
+    // await newUser.save()
 
     res.json({
-      token,
-      newUser,
+      // newUser,
       status: 201
     })
   }

@@ -9,7 +9,7 @@ router.post('/', Register)
 
 router.post('/:email', Login)
 
-router.get('/user', checkAuth, GetMe)
+// router.get('/user', checkAuth, GetMe)
 
 router.patch('/:id', checkAuth, updateInfo)
 
