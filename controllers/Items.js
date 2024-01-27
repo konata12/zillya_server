@@ -5,6 +5,17 @@ import {
     createObjectToCountItems,
     countItems,
     countPages,
+    validateCategory,
+    validateParameter,
+    validatePage,
+    createBaseAggregateQuery,
+    countSkip,
+    createAggregateMatch,
+    createAggregateSort,
+    fetchItems,
+    defineParameterSelector,
+    defineSortValue,
+    defineSortField,
 } from '../services/Items.service.js'
 
 // pagination
@@ -12,7 +23,6 @@ export const getItems = async (req, res) => {
     try {
         // basic
         const itemsOnPage = 9
-        // plus in query = %2B
 
         // sorting parameters
         const parameter = req.query.parameter || 'default';
@@ -21,6 +31,16 @@ export const getItems = async (req, res) => {
 
         console.log(parameter, category, page)
 
+        // category validation
+        if (validateCategory(category)) return res.status(400).json({
+            message: `There doesn't exist such items by this category`
+        })
+
+        // parameter validation
+        if (validateParameter(parameter)) return res.status(400).json({
+            message: `There doesn't exist such items by this parameter`
+        })
+
         // number of items
         const countCategory = createObjectToCountItems(category)
         const itemsNum = await countItems(category, countCategory)
@@ -28,134 +48,28 @@ export const getItems = async (req, res) => {
         // number of pages
         const pagesNum = countPages(itemsNum, itemsOnPage)
 
-        console.log('items:', itemsNum)
-        console.log('pages:', pagesNum)
-
-        // if this page doesn't exist return there aren't such items
-        if (!(page >= 1 && page <= pagesNum)) {
-            return res.status(400).json({
-                message: `There doesn't exist such items`
-            })
-        }
-
-        // category validation
-        const catigories = {
-            all: 'all',
-            vape: 'vape',
-            spray: 'spray',
-            cosmetic: 'cosmetic',
-            tablets: 'tablets',
-            pets: 'pets',
-            concentrates: 'concentrates',
-            oil: 'oil',
-            food: 'food',
-            drinks: 'drinks',
-            devices: 'devices',
-        }
-        console.log('anus',catigories[category])
-        switch (category) {
-            case 'all':
-            case 'vape':
-            case 'spray':
-            case 'cosmetic':
-            case 'tablets':
-            case 'pets':
-            case 'concentrates':
-            case 'oil':
-            case 'food':
-            case 'drinks':
-            case 'devices':
-                break;
-
-            default:
-                return res.status(400).json({
-                    message: `There doesn't exist such items by this category`
-                })
-        }
-        // parameter validation
-        switch (parameter) {
-            case 'default':
-            case '-title':
-            case '+title':
-            case '-price':
-            case '+price':
-                break;
-
-            default:
-                return res.status(400).json({
-                    message: `There doesn't exist such items by this parameter`
-                })
-        }
+        // page validation
+        if (validatePage(page, pagesNum)) return res.status(400).json({
+            message: `There doesn't exist such items`
+        })
 
         // create base aggregation query
-        const aggregateQuery = [
-            // get object of default choice of item
-            {
-                $addFields: {
-                    defaultChoice: {
-                        $arrayElemAt: ["$choice", 0]
-                    },
-                }
-            },
-            // get discount price of item
-            {
-                $addFields: {
-                    discountPrice: {
-                        $multiply: ["$defaultChoice.price", {
-                            $divide: [{
-                                $subtract: [100, "$defaultChoice.discount"]
-                            }, 100]
-                        }]
-                    },
-                }
-            },
-        ]
+        const aggregateQuery = createBaseAggregateQuery()
 
         // skip
-        const skip = (page - 1) * itemsOnPage
-        console.log(skip)
+        const skip = countSkip(page, itemsOnPage)
 
         // category
-        const matchCategory = category === 'all' ? {} :
-            { type: category }
-        // add filtering by category
-        aggregateQuery.unshift({ $match: matchCategory })
-        console.log(matchCategory)
+        const matchCategory = createAggregateMatch(category)
 
         // sorting
-        // get - or + to define sort direction, d means default so no direction
-        const parameterSelector = parameter.slice(0, 1) === 'd' ? 'default' :
-            parameter.slice(0, 1)
-        // get -1, 1 or '' for sort value
-        const sortValue = parameterSelector === '-' || parameterSelector === '+' ? +(parameterSelector + 1) :
-            ''
-        // get parameter for sorting: price, title or '' if default
-        const sortField = parameter.slice(0, 1) === 'd' ? 'default' :
-            parameter.slice(1)
-        // setting sort object
-        const sort = {}
-        // add sorting
-        switch (sortField) {
-            case 'price':
-                sort.discountPrice = sortValue
-                aggregateQuery.push({ $sort: sort })
-                break;
-            case 'title':
-                sort.titleFstPart = sortValue
-                sort.titleScndPart = sortValue
-                aggregateQuery.push({ $sort: sort })
-                break;
-
-            default:
-                break;
-        }
-        console.log('sort:', sort)
-        aggregateQuery.push({ $skip: skip })
-        aggregateQuery.push({ $limit: itemsOnPage })
+        const parameterSelector = defineParameterSelector(parameter)
+        const sortValue = defineSortValue(parameterSelector)
+        const sortField = defineSortField(parameter)
+        const sort = createAggregateSort(sortField, sortValue)
 
         // get filtered items from db
-        console.log(aggregateQuery)
-        const items = await Item.aggregate(aggregateQuery)
+        const items = await fetchItems(aggregateQuery, matchCategory, sort, skip, itemsOnPage)
 
         console.log('send items')
         res.status(200).json({
