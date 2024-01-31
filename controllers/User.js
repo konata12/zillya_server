@@ -1,16 +1,10 @@
-import User from '../models/User.js'
-import { v4 as uuidv4 } from 'uuid'
-
-// import bcrypt from 'bcryptjs'
-// import jwt from 'jsonwebtoken'
-
 // SERVICES
 import {
   // VERIFICATE
   findUserByEmail,
   hashPassword,
   createUser,
-  createSession,
+  createSessionForVerification,
   setTransporter,
   sendVerificationEmail,
   createUUID,
@@ -19,15 +13,21 @@ import {
   getSession,
   getUserIdFromSession,
   activateUser,
+
+  // LOGIN
+  isCheckPasswordCorrect,
+  getLoginSessionByUserId,
+
+  // GET ME
+  loginSession,
 } from '../services/User.service.js'
 
-//verificateEmail user
+// verificateEmail user
 export const VerificateEmail = async (req, res) => {
   try {
-    // req.session.value = 'anus'
     console.log('VerificateEmail')
-    console.log(req.body);
     const { name, surname, email, password } = req.body
+    const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD
 
     // check if there is such a user
     const isUsed = await findUserByEmail(email)
@@ -40,7 +40,6 @@ export const VerificateEmail = async (req, res) => {
 
     // HASHING PASSWORD
     const hash = hashPassword(password)
-    const uuid = createUUID()
 
     // create user
     const user = createUser({ name, surname, email, hash })
@@ -50,15 +49,18 @@ export const VerificateEmail = async (req, res) => {
 
     // create session
     const userId = user._id
-    const session = createSession({ uuid, userId })
+    const session = createSessionForVerification(userId)
+    console.log(session._id)
 
     // save session
     await session.save()
 
-    const transporter = setTransporter()
+    // configure nodemailer
+    const transporter = setTransporter(EMAIL_PASSWORD)
 
-    const emailResp = sendVerificationEmail(transporter, uuid)
-    // console.log(emailResp)
+    // send email
+    const emailResp = sendVerificationEmail(transporter, session._id)
+    console.log(emailResp)
 
     res.json({
       message: 'Email was sent',
@@ -71,29 +73,29 @@ export const VerificateEmail = async (req, res) => {
   }
 }
 
+// register
 export const Register = async (req, res) => {
   try {
     console.log('register')
-    console.log(req.cookies)
-    // console.log(req.headers)
-    console.log(req.params.id)
 
     // get session id
     const sessionId = req.params.id
 
+    // get session
     const session = await getSession(sessionId)
-    console.log(session)
 
     // activate user account
     const userId = getUserIdFromSession(session)
     await activateUser(userId)
-    console.log(userId)
 
-    // res.header("Access-Control-Allow-Origin", "http://localhost:3000/verificate/caa48a3b-f4ba-4fd6-be75-954b6a7bca06");
-    res.cookie('session', `${sessionId}`, {
-      maxAge: 9000000000000,
+    // set tokens to cookies
+    res.cookie('AccessToken', `${session.AccessToken}`, {
       httpOnly: true,
-      secure: false
+      secure: true
+    })
+    res.cookie('RefreshToken', `${session.RefreshToken}`, {
+      httpOnly: true,
+      secure: true
     })
 
     res.send({
@@ -113,26 +115,151 @@ export const Register = async (req, res) => {
 // login user
 export const Login = async (req, res) => {
   try {
+    const { email, password } = req.body
 
+    const user = await findUserByEmail(email)
+    if (!user) {
+      return res.json({
+        message: 'incorrect user or password',
+        status: 404,
+      });
+    }
+
+    const isPasswordCorrect = await isCheckPasswordCorrect(password, user.password)
+    if (!isPasswordCorrect) {
+      return res.json({
+        message: 'incorrect user or password',
+        status: 404,
+      });
+    }
+
+    // set in session isLogged true
+    const session = await getLoginSessionByUserId(user._id)
+    console.log(session)
+
+    // set cookies
+    res.cookie('session', `${session.sessionId}`, {
+      httpOnly: true,
+      secure: true
+    })
 
     return res.json({
-      sessionID: '',
       message: 'You successfully entered the system',
       status: 201,
     })
+  }
+  catch (error) {
+    console.log(error)
+    return res.json({
+      message: 'something went wrong',
+      status: 500
+    })
+  }
+}
+
+export const GetMe = async (req, res) => {
+  try {
+    const sessionId = req.cookies.session
+    console.log(sessionId)
+    const session = await loginSession(sessionId)
+    console.log(session)
+
+    res.json({
+      basket: session.basket,
+      isLoggedIn: session.isLoggedIn,
+      status: 201,
+    })
+  }
+  catch (error) {
+    console.log(error);
+    res.json({
+      message: 'get me error'
+    })
+  }
+}
+
+export const checkIfUserIsLoggedin = async (req, res) => {
+  try {
+    const { AccessToken, RefreshToken } = req.cookies
+
+
+
+  } catch (error) {
+    console.log(error)
+    res.json({
+      message: 'checkIfUserIsLoggedin error'
+    })
+  }
+}
+
+export const Login = async (req, res) => {
+  try {
+    console.log('login')
+    console.log(req.body)
+    const { email, password } = req.body
+
+    console.log(email)
+    console.log(password)
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({
+        message: 'This user does not exist',
+        status: 404,
+      });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password)
+
+    if (!isPasswordCorrect) {
+      return res.json({
+        message: "incorrect password",
+        status: 401,
+      })
+    }
+
+    const token = jwt.sign({
+      id: user._id,
+    }, process.env.JWT_SECRET,
+      { expiresIn: '30d' },
+    )
+
+    if (!token) {
+      return res.json({ message: 'something went wrong', status: 500 })
+    }
+
+    return res.json({
+      token, user, message: 'You successfully entered the system', status: 201,
+    })
+
   }
   catch (error) {
     return res.json({ message: 'something went wrong', status: 500 })
   }
 }
 
+get me
+
 export const GetMe = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
 
-    res.json({
+    if (!user) {
+      return res.json({
+        message: 'this user is not exist'
+      })
+    }
 
+    const token = jwt.sign({
+      id: user._id,
+    }, process.env.JWT_SECRET,
+      { expiresIn: '30d' },
+    )
+
+    res.json({
+      user, token
     })
+
   }
   catch (error) {
     console.log(error);
@@ -142,84 +269,6 @@ export const GetMe = async (req, res) => {
 
   }
 }
-
-// export const Login = async (req, res) => {
-//   try {
-//     console.log('login')
-//     console.log(req.body)
-//     const { email, password } = req.body
-
-//     console.log(email)
-//     console.log(password)
-//     const user = await User.findOne({ email });
-
-//     if (!user) {
-//       return res.json({
-//         message: 'This user does not exist',
-//         status: 404,
-//       });
-//     }
-
-//     const isPasswordCorrect = await bcrypt.compare(password, user.password)
-
-//     if (!isPasswordCorrect) {
-//       return res.json({
-//         message: "incorrect password",
-//         status: 401,
-//       })
-//     }
-
-//     const token = jwt.sign({
-//       id: user._id,
-//     }, process.env.JWT_SECRET,
-//       { expiresIn: '30d' },
-//     )
-
-//     if (!token) {
-//       return res.json({ message: 'something went wrong', status: 500 })
-//     }
-
-//     return res.json({
-//       token, user, message: 'You successfully entered the system', status: 201,
-//     })
-
-//   }
-//   catch (error) {
-//     return res.json({ message: 'something went wrong', status: 500 })
-//   }
-// }
-
-//get me
-
-// export const GetMe = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.userId);
-
-//     if (!user) {
-//       return res.json({
-//         message: 'this user is not exist'
-//       })
-//     }
-
-//     const token = jwt.sign({
-//       id: user._id,
-//     }, process.env.JWT_SECRET,
-//       { expiresIn: '30d' },
-//     )
-
-//     res.json({
-//       user, token
-//     })
-
-//   }
-//   catch (error) {
-//     console.log(error);
-//     res.json({
-//       message: "no permision"
-//     })
-
-//   }
-// }
 
 export const updateInfo = async (req, res) => {
 

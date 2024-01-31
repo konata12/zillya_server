@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors'
 import cookieParser from "cookie-parser";
-import cookieSession from "cookie-session"
 
 //routes import
 import usersRoute from './routes/User.js';
@@ -17,7 +16,7 @@ import AdminItemsRoute from "./routes/admins/Items.js";
 const app = express();
 const corsOptions = {
     origin: 'http://localhost:3000',
-    // credentials: true,            //access-control-allow-credentials:true
+    credentials: true,            //access-control-allow-credentials:true
     optionSuccessStatus: 200
 }
 dotenv.config();
@@ -31,10 +30,6 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
-app.use(cookieSession({
-    name: 'session',
-    keys: ['key1', 'key2']
-}))
 
 //routes 
 app.use('/api/users', usersRoute)

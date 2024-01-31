@@ -2,7 +2,11 @@ import mongoose from "mongoose";
 
 const SessionSchema = new mongoose.Schema(
     {
-        sessionId: {
+        AccessToken: {
+            type: String,
+            required: true
+        },
+        RefreshToken: {
             type: String,
             required: true
         },
@@ -18,7 +22,7 @@ const SessionSchema = new mongoose.Schema(
             type: Boolean,
             required: true
         }
-    }
+    }, { timestamps: true },
 )
 
 export default mongoose.model('Session', SessionSchema)

@@ -9,7 +9,7 @@ router.post('/', VerificateEmail)
 
 router.get('/register/:id', Register)
 
-router.post('/:email', Login)
+router.post('/login', Login)
 
 router.get('/user', GetMe)
 
