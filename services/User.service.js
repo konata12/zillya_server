@@ -9,13 +9,10 @@ import User from '../models/User.js'
 import Session from '../models/Session.js'
 
 export const generateAccessToken = (data, expiresIn) => {
-    console.log(data)
-    console.log(expiresIn)
     const dataJWT = { token: data }
     const expiration = expiresIn !== 'none' ?
         { expiresIn: expiresIn } :
         {}
-    console.log(expiration)
     return jwt.sign(dataJWT, process.env.JWT_SECRET, expiration);
 }
 
@@ -36,14 +33,14 @@ export const createUser = ({ name, surname, email, hash }) => {
         surname,
         email,
         password: hash,
-        staff: false, 
+        staff: false,
         activated: false
     })
 }
 
 export const createSessionForVerification = (userId) => {
 
-    const AccessToken = generateAccessToken(uuidv4(), 300000)
+    const AccessToken = generateAccessToken(uuidv4(), '1d')
     const RefreshToken = generateAccessToken(uuidv4(), 'none')
     return new Session({
         AccessToken,
@@ -86,7 +83,8 @@ export const getSession = async (sessionId) => {
     return await Session.findOne({ _id: sessionId })
 }
 
-export const getUserIdFromSession = (session) => {
+export const getUserFromSession = async (session) => {
+    return await User.findOne({ _id: session.userId })
     console.log(session)
     console.log(session.userId)
     return session.userId
@@ -99,7 +97,7 @@ export const activateUser = async (userId) => {
 }
 
 // LOGIN
-export const isCheckPasswordCorrect = async (password, userPassword) => {
+export const checkIsPasswordCorrect = async (password, userPassword) => {
     return await bcrypt.compare(password, userPassword)
 }
 
@@ -121,4 +119,28 @@ export const loginSession = async (sessionId) => {
     })
 }
 
-// CHECK IF USER US LOGGES IN
+export const getSessionByRefreshToken = async (RefreshToken) => {
+    return await Session.findOne({ RefreshToken })
+}
+
+export const decodeAccessToken = (AccessToken) => {
+    return jwt.verify(AccessToken, process.env.JWT_SECRET)
+}
+
+export const setSessionLoggedInFalse = async (RefreshToken) => {
+    return await Session.findOneAndUpdate({ RefreshToken }, {
+        isLoggedIn: false
+    }, {
+        new: true
+    })
+}
+
+export const refreshSessionAccessToken = async (RefreshToken) => {
+    const AccessToken = generateAccessToken(uuidv4(), '1d')
+
+    return await Session.findOneAndUpdate({ RefreshToken }, {
+        AccessToken: AccessToken
+    }, {
+        new: true
+    })
+}

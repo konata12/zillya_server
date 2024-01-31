@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { VerificateEmail, Register, Login, GetMe, updateInfo } from '../controllers/User.js';
+import { VerificateEmail, Register, Login, GetSession, updateInfo } from '../controllers/User.js';
 import { checkAuth } from '../utils/checkAuth.js';
 
 
@@ -11,7 +11,7 @@ router.get('/register/:id', Register)
 
 router.post('/login', Login)
 
-router.get('/user', GetMe)
+router.get('/user', GetSession)
 
 router.patch('/:id', checkAuth, updateInfo)
 

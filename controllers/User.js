@@ -7,19 +7,22 @@ import {
   createSessionForVerification,
   setTransporter,
   sendVerificationEmail,
-  createUUID,
 
   // REGISTER
   getSession,
-  getUserIdFromSession,
+  getUserFromSession,
   activateUser,
 
   // LOGIN
-  isCheckPasswordCorrect,
+  checkIsPasswordCorrect,
   getLoginSessionByUserId,
 
   // GET ME
   loginSession,
+  getSessionByRefreshToken,
+  decodeAccessToken,
+  setSessionLoggedInFalse,
+  refreshSessionAccessToken
 } from '../services/User.service.js'
 
 // verificateEmail user
@@ -84,18 +87,26 @@ export const Register = async (req, res) => {
     // get session
     const session = await getSession(sessionId)
 
+    // get user
+    const user = await getUserFromSession(session)
+
+    // if account activated return
+    if (user.activated) return
+
     // activate user account
-    const userId = getUserIdFromSession(session)
-    await activateUser(userId)
+    await activateUser(user._id)
+    console.log('user activated')
 
     // set tokens to cookies
     res.cookie('AccessToken', `${session.AccessToken}`, {
       httpOnly: true,
-      secure: true
+      secure: true,
+      expires: Date.now() + (1000 * 60 * 60 * 24)
     })
     res.cookie('RefreshToken', `${session.RefreshToken}`, {
       httpOnly: true,
-      secure: true
+      secure: true,
+      expires: Date.now() + (1000 * 60 * 60 * 24 * 365)
     })
 
     res.send({
@@ -125,7 +136,7 @@ export const Login = async (req, res) => {
       });
     }
 
-    const isPasswordCorrect = await isCheckPasswordCorrect(password, user.password)
+    const isPasswordCorrect = await checkIsPasswordCorrect(password, user.password)
     if (!isPasswordCorrect) {
       return res.json({
         message: 'incorrect user or password',
@@ -138,12 +149,19 @@ export const Login = async (req, res) => {
     console.log(session)
 
     // set cookies
-    res.cookie('session', `${session.sessionId}`, {
+    res.cookie('AccessToken', `${session.AccessToken}`, {
       httpOnly: true,
-      secure: true
+      secure: true,
+      expires: Date.now() + (1000 * 60 * 60 * 24)
+    })
+    res.cookie('RefreshToken', `${session.RefreshToken}`, {
+      httpOnly: true,
+      secure: true,
+      expires: Date.now() + (1000 * 60 * 60 * 24 * 365)
     })
 
     return res.json({
+      basket: session.basket,
       message: 'You successfully entered the system',
       status: 201,
     })
@@ -157,16 +175,39 @@ export const Login = async (req, res) => {
   }
 }
 
-export const GetMe = async (req, res) => {
+export const GetSession = async (req, res) => {
   try {
-    const sessionId = req.cookies.session
-    console.log(sessionId)
-    const session = await loginSession(sessionId)
-    console.log(session)
+    console.log('get session')
+
+    // get tokens
+    const { AccessToken, RefreshToken } = req.cookies
+    console.log(AccessToken, RefreshToken)
+
+    // get access token data
+    const decodedAccessToken = decodeAccessToken(AccessToken)
+
+    // check if access token expired
+    // then set session is logged in false
+    if (Date.now() > decodedAccessToken.exp * 1000) {
+      console.log('token expired')
+      await setSessionLoggedInFalse(RefreshToken)
+      return
+    }
+
+    // if token doesn't expired then refresh him
+    // and set to cookies
+    const sessionAfterRefreshing = await refreshSessionAccessToken(RefreshToken)
+    console.log(sessionAfterRefreshing.AccessToken === AccessToken)
+
+    res.cookie('AccessToken', `${sessionAfterRefreshing.AccessToken}`, {
+      httpOnly: true,
+      secure: true,
+      expires: Date.now() + (1000 * 60 * 60 * 24)
+    })
 
     res.json({
-      basket: session.basket,
-      isLoggedIn: session.isLoggedIn,
+      // basket: session.basket,
+      // isLoggedIn: session.isLoggedIn,
       status: 201,
     })
   }
@@ -175,98 +216,6 @@ export const GetMe = async (req, res) => {
     res.json({
       message: 'get me error'
     })
-  }
-}
-
-export const checkIfUserIsLoggedin = async (req, res) => {
-  try {
-    const { AccessToken, RefreshToken } = req.cookies
-
-
-
-  } catch (error) {
-    console.log(error)
-    res.json({
-      message: 'checkIfUserIsLoggedin error'
-    })
-  }
-}
-
-export const Login = async (req, res) => {
-  try {
-    console.log('login')
-    console.log(req.body)
-    const { email, password } = req.body
-
-    console.log(email)
-    console.log(password)
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({
-        message: 'This user does not exist',
-        status: 404,
-      });
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(password, user.password)
-
-    if (!isPasswordCorrect) {
-      return res.json({
-        message: "incorrect password",
-        status: 401,
-      })
-    }
-
-    const token = jwt.sign({
-      id: user._id,
-    }, process.env.JWT_SECRET,
-      { expiresIn: '30d' },
-    )
-
-    if (!token) {
-      return res.json({ message: 'something went wrong', status: 500 })
-    }
-
-    return res.json({
-      token, user, message: 'You successfully entered the system', status: 201,
-    })
-
-  }
-  catch (error) {
-    return res.json({ message: 'something went wrong', status: 500 })
-  }
-}
-
-get me
-
-export const GetMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-
-    if (!user) {
-      return res.json({
-        message: 'this user is not exist'
-      })
-    }
-
-    const token = jwt.sign({
-      id: user._id,
-    }, process.env.JWT_SECRET,
-      { expiresIn: '30d' },
-    )
-
-    res.json({
-      user, token
-    })
-
-  }
-  catch (error) {
-    console.log(error);
-    res.json({
-      message: "no permision"
-    })
-
   }
 }
 
