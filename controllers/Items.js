@@ -22,6 +22,9 @@ import {
 export const getItems = async (req, res) => {
     try {
         // basic
+        res.cookie('session', `sraka`, )
+        console.log(res.headersSent)
+        console.log(res.headers)
         const itemsOnPage = 9
 
         // sorting parameters

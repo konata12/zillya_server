@@ -1,7 +1,9 @@
-import express  from "express";
+import express from "express";
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors'
+import cookieParser from "cookie-parser";
+import cookieSession from "cookie-session"
 
 //routes import
 import usersRoute from './routes/User.js';
@@ -13,6 +15,11 @@ import AdminUsersRoute from "./routes/admins/Users.js";
 import AdminItemsRoute from "./routes/admins/Items.js";
 
 const app = express();
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    // credentials: true,            //access-control-allow-credentials:true
+    optionSuccessStatus: 200
+}
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -21,9 +28,13 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 // const PORT = 5000
 
 //middlewares
-app.use(cors())
-app.use(express.json());
-
+app.use(cors(corsOptions))
+app.use(express.json())
+app.use(cookieParser())
+app.use(cookieSession({
+    name: 'session',
+    keys: ['key1', 'key2']
+}))
 
 //routes 
 app.use('/api/users', usersRoute)
@@ -39,7 +50,7 @@ app.use('/api/admin/items', AdminItemsRoute)
 async function start() {
     try {
         await mongoose.connect(`mongodb+srv://${DB_USER}:${DB_PASSWORD}@test.dkgdzdg.mongodb.net/?retryWrites=true&w=majority`)
-        app.listen(PORT , () => console.log(`server started on port: ${PORT}`))
+        app.listen(PORT, () => console.log(`server started on port: ${PORT}`))
     } catch (error) {
         console.log(error);
     }

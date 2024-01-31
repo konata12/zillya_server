@@ -50,6 +50,10 @@ const UserSchema = new mongoose.Schema(
         type: Boolean,
         required: true,
       },
+      activated: {
+        type: Boolean,
+        required: true
+      }
     },
     { timestamps: true },
 )

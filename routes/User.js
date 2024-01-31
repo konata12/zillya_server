@@ -1,15 +1,17 @@
 import { Router } from 'express';
-import { Register, Login, GetMe, updateInfo } from '../controllers/User.js';
+import { VerificateEmail, Register, Login, GetMe, updateInfo } from '../controllers/User.js';
 import { checkAuth } from '../utils/checkAuth.js';
 
 
 const router = new Router()
 
-router.post('/', Register)
+router.post('/', VerificateEmail)
+
+router.get('/register/:id', Register)
 
 router.post('/:email', Login)
 
-// router.get('/user', checkAuth, GetMe)
+router.get('/user', GetMe)
 
 router.patch('/:id', checkAuth, updateInfo)
 

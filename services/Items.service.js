@@ -187,7 +187,6 @@ export const fetchItems = async (aggregateQuery, matchCategory, sort, skip, item
         aggregateQuery.push({ $skip: skip })
         aggregateQuery.push({ $limit: itemsOnPage })
 
-        console.log(aggregateQuery)
         return await Item.aggregate(aggregateQuery)
     } catch (error) {
         throw new Error(error)
