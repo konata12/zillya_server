@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid'
 import nodemailer from 'nodemailer'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-// bxlj rvki tnci ykza
 
 // MODELS
 import User from '../models/User.js'
@@ -14,6 +13,10 @@ export const generateAccessToken = (data, expiresIn) => {
         { expiresIn: expiresIn } :
         {}
     return jwt.sign(dataJWT, process.env.JWT_SECRET, expiration);
+}
+
+export const createDateForCookie = (date) => {
+    return new Date((Date.now() + date))
 }
 
 // VERIFICATE
@@ -85,14 +88,13 @@ export const getSession = async (sessionId) => {
 
 export const getUserFromSession = async (session) => {
     return await User.findOne({ _id: session.userId })
-    console.log(session)
-    console.log(session.userId)
-    return session.userId
 }
 
 export const activateUser = async (userId) => {
-    await User.findOneAndUpdate({ _id: userId }, {
+    return await User.findOneAndUpdate({ _id: userId }, {
         activated: true
+    }, {
+        new: true
     })
 }
 
@@ -111,18 +113,6 @@ export const getLoginSessionByUserId = async (userId) => {
 }
 
 // GET ME
-export const loginSession = async (sessionId) => {
-    return await Session.findOneAndUpdate({ sessionId: sessionId }, {
-        isLoggedIn: true
-    }, {
-        new: true
-    })
-}
-
-export const getSessionByRefreshToken = async (RefreshToken) => {
-    return await Session.findOne({ RefreshToken })
-}
-
 export const decodeAccessToken = (AccessToken) => {
     return jwt.verify(AccessToken, process.env.JWT_SECRET)
 }
@@ -143,4 +133,16 @@ export const refreshSessionAccessToken = async (RefreshToken) => {
     }, {
         new: true
     })
+}
+
+export const getUserData = (user) => {
+    const userData = {
+        name: user.name,
+        surname: user.surname,
+        email: user.email,
+        orders: user.orders,
+        staff: user.staff,
+    }
+
+    return userData
 }

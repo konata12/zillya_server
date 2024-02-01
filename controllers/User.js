@@ -1,5 +1,7 @@
 // SERVICES
 import {
+  createDateForCookie,
+
   // VERIFICATE
   findUserByEmail,
   hashPassword,
@@ -18,11 +20,10 @@ import {
   getLoginSessionByUserId,
 
   // GET ME
-  loginSession,
-  getSessionByRefreshToken,
   decodeAccessToken,
   setSessionLoggedInFalse,
-  refreshSessionAccessToken
+  refreshSessionAccessToken,
+  getUserData
 } from '../services/User.service.js'
 
 // verificateEmail user
@@ -53,7 +54,6 @@ export const VerificateEmail = async (req, res) => {
     // create session
     const userId = user._id
     const session = createSessionForVerification(userId)
-    console.log(session._id)
 
     // save session
     await session.save()
@@ -89,29 +89,34 @@ export const Register = async (req, res) => {
 
     // get user
     const user = await getUserFromSession(session)
+    console.log(user)
 
     // if account activated return
     if (user.activated) return
 
     // activate user account
-    await activateUser(user._id)
+    const activatedUser = await activateUser(user._id)
     console.log('user activated')
+
+    // cookies expiration
+    const accessDateExpiration = createDateForCookie(1000 * 60 * 60 * 24)
+    const refreshDateExpiration = createDateForCookie(1000 * 60 * 60 * 24 * 365)
 
     // set tokens to cookies
     res.cookie('AccessToken', `${session.AccessToken}`, {
-      httpOnly: true,
+      httpOnly: false,
       secure: true,
-      expires: Date.now() + (1000 * 60 * 60 * 24)
+      expires: accessDateExpiration
     })
     res.cookie('RefreshToken', `${session.RefreshToken}`, {
       httpOnly: true,
       secure: true,
-      expires: Date.now() + (1000 * 60 * 60 * 24 * 365)
+      expires: refreshDateExpiration
     })
 
     res.send({
       session: session,
-      userCreated: true,
+      userActivated: activatedUser.activated,
       message: 'user'
     })
   } catch (error) {
@@ -148,20 +153,25 @@ export const Login = async (req, res) => {
     const session = await getLoginSessionByUserId(user._id)
     console.log(session)
 
+    // cookies expiration
+    const accessDateExpiration = createDateForCookie(1000 * 60 * 60 * 24)
+    const refreshDateExpiration = createDateForCookie(1000 * 60 * 60 * 2 * 365)
+
     // set cookies
     res.cookie('AccessToken', `${session.AccessToken}`, {
-      httpOnly: true,
+      httpOnly: false,
       secure: true,
-      expires: Date.now() + (1000 * 60 * 60 * 24)
+      expires: accessDateExpiration
     })
     res.cookie('RefreshToken', `${session.RefreshToken}`, {
       httpOnly: true,
       secure: true,
-      expires: Date.now() + (1000 * 60 * 60 * 24 * 365)
+      expires: refreshDateExpiration
     })
 
     return res.json({
-      basket: session.basket,
+      session: session,
+      userActivated: user.activated,
       message: 'You successfully entered the system',
       status: 201,
     })
@@ -175,6 +185,7 @@ export const Login = async (req, res) => {
   }
 }
 
+// get session
 export const GetSession = async (req, res) => {
   try {
     console.log('get session')
@@ -195,26 +206,33 @@ export const GetSession = async (req, res) => {
     }
 
     // if token doesn't expired then refresh him
-    // and set to cookies
     const sessionAfterRefreshing = await refreshSessionAccessToken(RefreshToken)
-    console.log(sessionAfterRefreshing.AccessToken === AccessToken)
 
+    // get user
+    const user = await getUserFromSession(sessionAfterRefreshing)
+
+    const resUserData = getUserData(user)
+
+    // set cookies
+    const accessDateExpiration = createDateForCookie(1000 * 60 * 60 * 24)
     res.cookie('AccessToken', `${sessionAfterRefreshing.AccessToken}`, {
-      httpOnly: true,
+      httpOnly: false,
       secure: true,
-      expires: Date.now() + (1000 * 60 * 60 * 24)
+      expires: accessDateExpiration
     })
 
+    console.log(sessionAfterRefreshing.basket)
     res.json({
-      // basket: session.basket,
-      // isLoggedIn: session.isLoggedIn,
+      session: sessionAfterRefreshing.basket,
+      user: resUserData,
+      userActivated: user.activated,
       status: 201,
     })
   }
   catch (error) {
     console.log(error);
-    res.json({
-      message: 'get me error'
+    res.status(400).json({
+      message: 'get session error'
     })
   }
 }
