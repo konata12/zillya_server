@@ -131,6 +131,7 @@ export const Register = async (req, res) => {
 // login user
 export const Login = async (req, res) => {
   try {
+    console.log('login')
     const { email, password } = req.body
 
     const user = await findUserByEmail(email)
@@ -193,6 +194,16 @@ export const GetSession = async (req, res) => {
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
     console.log(AccessToken, RefreshToken)
+    // return res.status(400).json({
+    //   message: 'access to session denied'
+    // })
+
+    // if there aren't tokens return
+    if (AccessToken === undefined || RefreshToken === undefined) {
+      return res.status(200).json({
+        message: 'access to session denied'
+      })
+    }
 
     // get access token data
     const decodedAccessToken = decodeAccessToken(AccessToken)
@@ -221,7 +232,6 @@ export const GetSession = async (req, res) => {
       expires: accessDateExpiration
     })
 
-    console.log(sessionAfterRefreshing.basket)
     res.json({
       session: sessionAfterRefreshing.basket,
       user: resUserData,
@@ -232,7 +242,7 @@ export const GetSession = async (req, res) => {
   catch (error) {
     console.log(error);
     res.status(400).json({
-      message: 'get session error'
+      message: 'access to session denied'
     })
   }
 }
