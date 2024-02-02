@@ -36,9 +36,8 @@ export const VerificateEmail = async (req, res) => {
     // check if there is such a user
     const isUsed = await findUserByEmail(email)
     if (isUsed) {
-      return res.json({
-        message: "this email is alredy used",
-        status: 400
+      return res.status(400).json({
+        message: "this email is alredy used"
       })
     }
 
@@ -62,17 +61,18 @@ export const VerificateEmail = async (req, res) => {
     const transporter = setTransporter(EMAIL_PASSWORD)
 
     // send email
-    const emailResp = sendVerificationEmail(transporter, session._id)
+    const emailResp = sendVerificationEmail(transporter, session._id, email)
     console.log(emailResp)
 
-    res.json({
-      message: 'Email was sent',
-      status: 201
+    res.status(201).json({
+      message: 'Email was sent'
     })
   }
   catch (error) {
-    console.log(error);
-    res.json({ message: `error while creating user ${error}`, status: 400 })
+    console.log(error)
+    res.status(500).json({
+      message: 'error while creating user and sending verification email'
+    })
   }
 }
 
@@ -92,10 +92,12 @@ export const Register = async (req, res) => {
     console.log(user)
 
     // if account activated return
-    if (user.activated) return
+    if (user.activated) return res.status(400).json({
+      message: 'user already activated'
+    })
 
     // activate user account
-    const activatedUser = await activateUser(user._id)
+    await activateUser(user._id)
     console.log('user activated')
 
     // cookies expiration
@@ -114,16 +116,13 @@ export const Register = async (req, res) => {
       expires: refreshDateExpiration
     })
 
-    res.send({
-      session: session,
-      userActivated: activatedUser.activated,
-      message: 'user'
+    res.status(201).send({
+      message: 'user activated'
     })
   } catch (error) {
     console.log(error);
-    res.json({
-      message: `error while creating user ${error}`,
-      status: 400
+    res.status(500).json({
+      message: `user activation error`
     })
   }
 }
@@ -136,17 +135,15 @@ export const Login = async (req, res) => {
 
     const user = await findUserByEmail(email)
     if (!user) {
-      return res.json({
-        message: 'incorrect user or password',
-        status: 404,
+      return res.status(401).json({
+        message: 'incorrect email or password',
       });
     }
 
     const isPasswordCorrect = await checkIsPasswordCorrect(password, user.password)
     if (!isPasswordCorrect) {
-      return res.json({
-        message: 'incorrect user or password',
-        status: 404,
+      return res.status(401).json({
+        message: 'incorrect email or password',
       });
     }
 
@@ -170,18 +167,16 @@ export const Login = async (req, res) => {
       expires: refreshDateExpiration
     })
 
-    return res.json({
+    return res.status(200).json({
       session: session,
-      userActivated: user.activated,
+      user: user,
       message: 'You successfully entered the system',
-      status: 201,
     })
   }
   catch (error) {
     console.log(error)
-    return res.json({
-      message: 'something went wrong',
-      status: 500
+    return res.status(500).json({
+      message: 'problem while loggin in'
     })
   }
 }
@@ -194,13 +189,10 @@ export const GetSession = async (req, res) => {
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
     console.log(AccessToken, RefreshToken)
-    // return res.status(400).json({
-    //   message: 'access to session denied'
-    // })
 
     // if there aren't tokens return
     if (AccessToken === undefined || RefreshToken === undefined) {
-      return res.status(200).json({
+      return res.status(401).json({
         message: 'access to session denied'
       })
     }
@@ -232,17 +224,16 @@ export const GetSession = async (req, res) => {
       expires: accessDateExpiration
     })
 
-    res.json({
-      session: sessionAfterRefreshing.basket,
+    res.status(200).json({
+      session: sessionAfterRefreshing,
       user: resUserData,
-      userActivated: user.activated,
-      status: 201,
+      message: 'succesfully get user session and data',
     })
   }
   catch (error) {
     console.log(error);
-    res.status(400).json({
-      message: 'access to session denied'
+    res.status(500).json({
+      message: 'access to session denied',
     })
   }
 }

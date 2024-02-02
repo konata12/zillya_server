@@ -72,10 +72,10 @@ export const createUUID = () => {
     return uuidv4()
 }
 
-export const sendVerificationEmail = async (transporter, sessionId) => {
+export const sendVerificationEmail = async (transporter, sessionId, email) => {
     return await transporter.sendMail({
         from: 'dimakeshaa@gmail.com',
-        to: 'dimakeshaa@gmail.com',
+        to: email,
         subject: 'JOPA',
         html: `<h1>http://localhost:3000/verificate/${sessionId}</h1>`
     })
@@ -91,10 +91,8 @@ export const getUserFromSession = async (session) => {
 }
 
 export const activateUser = async (userId) => {
-    return await User.findOneAndUpdate({ _id: userId }, {
+    await User.findOneAndUpdate({ _id: userId }, {
         activated: true
-    }, {
-        new: true
     })
 }
 
