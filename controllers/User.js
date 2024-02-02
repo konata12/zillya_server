@@ -19,6 +19,9 @@ import {
   checkIsPasswordCorrect,
   getLoginSessionByUserId,
 
+  // LOGOUT
+  logoutSession,
+
   // GET ME
   decodeAccessToken,
   setSessionLoggedInFalse,
@@ -177,6 +180,23 @@ export const Login = async (req, res) => {
     console.log(error)
     return res.status(500).json({
       message: 'problem while loggin in'
+    })
+  }
+}
+
+// logout
+
+export const Logout = async (req, res) => {
+  try {
+    console.log('logout')
+    const { AccessToken } = req.cookies
+    await logoutSession(AccessToken)
+
+    res.status(202).send('succesfully loged out')
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: 'logout error',
     })
   }
 }

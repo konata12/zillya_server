@@ -110,6 +110,15 @@ export const getLoginSessionByUserId = async (userId) => {
     })
 }
 
+// LOGOUT
+export const logoutSession = async (AccessToken) => {
+    await Session.findOneAndUpdate({ AccessToken: AccessToken }, {
+        isLoggedIn: false
+    }, {
+        new: true
+    })
+}
+
 // GET ME
 export const decodeAccessToken = (AccessToken) => {
     return jwt.verify(AccessToken, process.env.JWT_SECRET)
