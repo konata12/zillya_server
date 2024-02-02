@@ -188,7 +188,6 @@ export const GetSession = async (req, res) => {
 
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
-    console.log(AccessToken, RefreshToken)
 
     // if there aren't tokens return
     if (AccessToken === undefined || RefreshToken === undefined) {

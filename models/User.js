@@ -1,5 +1,30 @@
 import mongoose from 'mongoose'
 
+const AdressSchema = new mongoose.Schema(
+  {
+    city: {
+      type: String,
+      required: false,
+    },
+    index: {
+      type: Number,
+      required: false,
+    },
+    street: {
+      type: String,
+      required: false,
+    },
+    houseNum: {
+      type: Number,
+      required: false,
+    },
+    apartment: {
+      type: Number,
+      required: false,
+    },
+  }
+)
+
 const UserSchema = new mongoose.Schema(
   {
     name: {
@@ -22,25 +47,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    city: {
-      type: String,
-      required: false,
-    },
-    index: {
-      type: String,
-      required: false,
-    },
-    street: {
-      type: String,
-      required: false,
-    },
-    houseNum: {
-      type: String,
-      required: false,
-    },
-    apartment: {
-      type: String,
-      required: false,
+    adress: {
+      type: AdressSchema,
+      default: {},
+      required: false
     },
     orders: {
       type: Array,
