@@ -6,7 +6,7 @@ const choiceSchema = new mongoose.Schema(
         option: String,
         price: Number,
         discount: Number,
-    }
+    }, { _id : false }
 )
 
 const ItemsSchema = new mongoose.Schema(

@@ -120,6 +120,7 @@ export const Register = async (req, res) => {
     })
 
     res.status(201).send({
+      user: user,
       message: 'user activated'
     })
   } catch (error) {
@@ -185,7 +186,6 @@ export const Login = async (req, res) => {
 }
 
 // logout
-
 export const Logout = async (req, res) => {
   try {
     console.log('logout')
@@ -235,6 +235,11 @@ export const GetSession = async (req, res) => {
 
     const resUserData = getUserData(user)
 
+    // if user inactive for 24 hour set session isLogged: false
+    setTimeout(() => {
+      logoutSession(sessionAfterRefreshing.AccessToken)
+    }, (1000 * 60 * 60 * 24))
+
     // set cookies
     const accessDateExpiration = createDateForCookie(1000 * 60 * 60 * 24)
     res.cookie('AccessToken', `${sessionAfterRefreshing.AccessToken}`, {
@@ -258,34 +263,25 @@ export const GetSession = async (req, res) => {
 }
 
 export const updateInfo = async (req, res) => {
-
-  const data = req.body.userData;
-
   try {
-    const user = await User.findById(data._id);
+    // get tokens
+    const { AccessToken, RefreshToken } = req.cookies
 
-    if (user) {
-      user._id = data._id,
-        user.name = data.name,
-        user.surname = data.surname,
-        user.email = data.email,
-        user.number = data.number,
-        user.city = data.city,
-        user.index = data.index,
-        user.houseNum = data.houseNum,
-        user.apartment = data.apartment,
-        user.orders = user.orders
-    };
+    // if there aren't tokens return
+    if (AccessToken === undefined || RefreshToken === undefined) {
+      return res.status(401).json({
+        message: 'access denied'
+      })
+    }
 
-
-    await user.save()
-
-    res.json({ user })
+    res.status(200).json({
+      message: 'succesfully edited user data'
+    })
   }
   catch (error) {
     console.log(error);
-    res.json({
-      message: `no permision ${error}`
+    res.status(500).json({
+      message: `user edit error`
     })
 
   }

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 
-const AdressSchema = new mongoose.Schema(
+const AddressSchema = new mongoose.Schema(
   {
     city: {
       type: String,
@@ -22,7 +22,7 @@ const AdressSchema = new mongoose.Schema(
       type: Number,
       required: false,
     },
-  }
+  }, { _id : false }
 )
 
 const UserSchema = new mongoose.Schema(
@@ -43,12 +43,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    number: {
+    phomeNumber: {
       type: String,
       required: false,
     },
-    adress: {
-      type: AdressSchema,
+    address: {
+      type: AddressSchema,
       default: {},
       required: false
     },
@@ -58,6 +58,7 @@ const UserSchema = new mongoose.Schema(
     },
     staff: {
       type: Boolean,
+      default: false,
       required: true,
     },
     activated: {

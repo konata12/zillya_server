@@ -148,8 +148,11 @@ export const getUserData = (user) => {
         surname: user.surname,
         email: user.email,
         orders: user.orders,
+        address: user.address,
         staff: user.staff,
     }
 
     return userData
 }
+
+// PATCH USER DATA
