@@ -155,17 +155,20 @@ export const Login = async (req, res) => {
     const session = await getLoginSessionByUserId(user._id)
     console.log(session)
 
+    // refresh access token
+    const sessionAfterRefreshing = await refreshSessionAccessToken(session.RefreshToken)
+
     // cookies expiration
     const accessDateExpiration = createDateForCookie(1000 * 60 * 60 * 24)
-    const refreshDateExpiration = createDateForCookie(1000 * 60 * 60 * 2 * 365)
+    const refreshDateExpiration = createDateForCookie(1000 * 60 * 60 * 24 * 365)
 
     // set cookies
-    res.cookie('AccessToken', `${session.AccessToken}`, {
+    res.cookie('AccessToken', `${sessionAfterRefreshing.AccessToken}`, {
       httpOnly: false,
       secure: true,
       expires: accessDateExpiration
     })
-    res.cookie('RefreshToken', `${session.RefreshToken}`, {
+    res.cookie('RefreshToken', `${sessionAfterRefreshing.RefreshToken}`, {
       httpOnly: true,
       secure: true,
       expires: refreshDateExpiration
