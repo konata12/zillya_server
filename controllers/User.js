@@ -150,7 +150,7 @@ export const Login = async (req, res) => {
     const isPasswordCorrect = await checkIsPasswordCorrect(password, user.password)
     if (!isPasswordCorrect) {
       return res.status(401).json({
-        message: 'incorrect email or password',
+        message: 'incorrect email or password 1',
       });
     }
 
@@ -273,7 +273,14 @@ export const GetSession = async (req, res) => {
 // edit user data
 export const updateInfo = async (req, res) => {
   try {
+    console.log('edit user data')
     const userData = req.body
+    // console.log(userData)
+    // console.log(Object.keys(userData).length)
+
+    // if (userData) return res.status(400).json({
+    //   message: 'no info to update'
+    // })
 
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
@@ -299,9 +306,10 @@ export const updateInfo = async (req, res) => {
       })
     }
 
-    editUserData(userData, AccessToken)
+    const user = await editUserData(userData, AccessToken)
 
     res.status(200).json({
+      user: user,
       message: 'succesfully edited user data'
     })
   }

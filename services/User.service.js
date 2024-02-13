@@ -15,14 +15,50 @@ const generateAccessToken = (data, expiresIn) => {
     return jwt.sign(dataJWT, process.env.JWT_SECRET, expiration);
 }
 
+export const createDateForCookie = (date) => {
+    return new Date((Date.now() + date))
+}
+
 const removeEmptyValues = (obj) => {
     const filteredArray = Object.entries(obj).filter(([_, value]) => value !== '')
     const data = Object.fromEntries(filteredArray)
+    // const address = checkAddress(data)
+
+    // console.log(Object.keys(address).length)
+
+    // if (Object.keys(address).length) {
+    //     data.address = address
+    // }
+
     return data
 }
 
-export const createDateForCookie = (date) => {
-    return new Date((Date.now() + date))
+const filterAddress = (userData) => {
+    const address = checkAddress(userData)
+    if (Object.keys(address).length) {
+        userData.address = address
+    }
+
+    return userData
+}
+
+const checkAddress = (obj) => {
+    console.log('anus')
+    const addressKeys = {
+        city: 'city',
+        index: 'index',
+        street: 'street',
+        houseNum: 'houseNum',
+        apartment: 'apartment'
+    }
+
+    const addressArray = Object.entries(obj).map((value) => {
+        if (addressKeys[value[0]]) return value
+    }).filter(value => value !== undefined)
+
+    const address = Object.fromEntries(addressArray)
+
+    return address
 }
 
 // VERIFICATE
@@ -162,22 +198,25 @@ export const getUserData = (user) => {
 }
 
 // PATCH USER DATA
-export const getSessionByAccessToken = async (AccessToken, userData) => {
+export const getSessionByAccessToken = async (AccessToken) => {
     return await Session.findOne({ AccessToken })
 }
 
 export const updateUser = async (session, userData) => {
     return await User.findOneAndUpdate({ _id: session.userId },
         userData, {
-            new: true
-        })
+        new: true
+    })
 }
 
 export const editUserData = async (userData, AccessToken) => {
     const filteredData = removeEmptyValues(userData)
 
+    const userDataWithAddress = filterAddress(filteredData)
+
     const session = await getSessionByAccessToken(AccessToken)
-    const user = await updateUser(session, filteredData)
-    console.log('filtered', filteredData)
+    const user = await updateUser(session, userDataWithAddress)
     console.log('update', user)
+
+    return user
 }
