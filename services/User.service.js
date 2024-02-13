@@ -7,12 +7,18 @@ import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import Session from '../models/Session.js'
 
-export const generateAccessToken = (data, expiresIn) => {
+const generateAccessToken = (data, expiresIn) => {
     const dataJWT = { token: data }
     const expiration = expiresIn !== 'none' ?
         { expiresIn: expiresIn } :
         {}
     return jwt.sign(dataJWT, process.env.JWT_SECRET, expiration);
+}
+
+const removeEmptyValues = (obj) => {
+    const filteredArray = Object.entries(obj).filter(([_, value]) => value !== '')
+    const data = Object.fromEntries(filteredArray)
+    console.log(data)
 }
 
 export const createDateForCookie = (date) => {
@@ -156,3 +162,19 @@ export const getUserData = (user) => {
 }
 
 // PATCH USER DATA
+export const getSessionByAccessToken = async (AccessToken) => {
+    const newAccessToken = generateAccessToken(uuidv4(), '1d')
+
+    return await Session.findOneAndUpdate({ AccessToken }, {
+        AccessToken: newAccessToken
+    }, {
+        new: true
+    })
+}
+
+export const editUserData = async (userData, AccessToken) => {
+    const filteredData = removeEmptyValues(userData)
+
+    const session = await getSessionByAccessToken(AccessToken)
+    console.log(session)
+}

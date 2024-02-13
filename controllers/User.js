@@ -26,7 +26,10 @@ import {
   decodeAccessToken,
   setSessionLoggedInFalse,
   refreshSessionAccessToken,
-  getUserData
+  getUserData,
+
+  // EDIT USER DATA
+  editUserData
 } from '../services/User.service.js'
 
 // verificateEmail user
@@ -227,7 +230,9 @@ export const GetSession = async (req, res) => {
     if (Date.now() > decodedAccessToken.exp * 1000) {
       console.log('token expired')
       await setSessionLoggedInFalse(RefreshToken)
-      return
+      return res.status(401).json({
+        message: 'access to session denied'
+      })
     }
 
     // if token doesn't expired then refresh him
@@ -265,17 +270,36 @@ export const GetSession = async (req, res) => {
   }
 }
 
+// edit user data
 export const updateInfo = async (req, res) => {
   try {
+    const userData = req.body
+
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
 
     // if there aren't tokens return
     if (AccessToken === undefined || RefreshToken === undefined) {
       return res.status(401).json({
+        message: 'access to session denied'
+      })
+    }
+
+    // get access token data
+    const decodedAccessToken = decodeAccessToken(AccessToken)
+
+    // check if access token expired
+    // then set session is logged in false
+    if (Date.now() > decodedAccessToken.exp * 1000) {
+      console.log('token expired')
+
+      await setSessionLoggedInFalse(RefreshToken)
+      return res.status(401).json({
         message: 'access denied'
       })
     }
+
+    editUserData(userData, AccessToken)
 
     res.status(200).json({
       message: 'succesfully edited user data'

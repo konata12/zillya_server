@@ -15,6 +15,6 @@ router.post('/logout', Logout)
 
 router.get('/user', GetSession)
 
-router.patch('/:id', checkAuth, updateInfo)
+router.patch('/user/edit', updateInfo)
 
 export default router
