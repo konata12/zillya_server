@@ -18,7 +18,7 @@ const generateAccessToken = (data, expiresIn) => {
 const removeEmptyValues = (obj) => {
     const filteredArray = Object.entries(obj).filter(([_, value]) => value !== '')
     const data = Object.fromEntries(filteredArray)
-    console.log(data)
+    return data
 }
 
 export const createDateForCookie = (date) => {
@@ -162,19 +162,22 @@ export const getUserData = (user) => {
 }
 
 // PATCH USER DATA
-export const getSessionByAccessToken = async (AccessToken) => {
-    const newAccessToken = generateAccessToken(uuidv4(), '1d')
+export const getSessionByAccessToken = async (AccessToken, userData) => {
+    return await Session.findOne({ AccessToken })
+}
 
-    return await Session.findOneAndUpdate({ AccessToken }, {
-        AccessToken: newAccessToken
-    }, {
-        new: true
-    })
+export const updateUser = async (session, userData) => {
+    return await User.findOneAndUpdate({ _id: session.userId },
+        userData, {
+            new: true
+        })
 }
 
 export const editUserData = async (userData, AccessToken) => {
     const filteredData = removeEmptyValues(userData)
 
     const session = await getSessionByAccessToken(AccessToken)
-    console.log(session)
+    const user = await updateUser(session, filteredData)
+    console.log('filtered', filteredData)
+    console.log('update', user)
 }

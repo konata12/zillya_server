@@ -281,7 +281,7 @@ export const updateInfo = async (req, res) => {
     // if there aren't tokens return
     if (AccessToken === undefined || RefreshToken === undefined) {
       return res.status(401).json({
-        message: 'access to session denied'
+        message: 'access denied'
       })
     }
 
