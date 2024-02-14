@@ -1,29 +1,7 @@
 import mongoose from 'mongoose'
 
-const AddressSchema = new mongoose.Schema(
-  {
-    city: {
-      type: String,
-      required: false,
-    },
-    index: {
-      type: Number,
-      required: false,
-    },
-    street: {
-      type: String,
-      required: false,
-    },
-    houseNum: {
-      type: Number,
-      required: false,
-    },
-    apartment: {
-      type: Number,
-      required: false,
-    },
-  }, { _id : false }
-)
+// SCHEMAS
+import Address from './Address.js'
 
 const UserSchema = new mongoose.Schema(
   {
@@ -48,9 +26,9 @@ const UserSchema = new mongoose.Schema(
       required: false,
     },
     address: {
-      type: AddressSchema,
-      default: {},
-      required: false
+      type: mongoose.Schema.Types.ObjectId,
+      ref: Address,
+      required: true
     },
     orders: {
       type: Array,

@@ -5,6 +5,7 @@ import cors from 'cors'
 import cookieParser from "cookie-parser";
 
 //routes import
+import authRoute from './routes/Auth.js';
 import usersRoute from './routes/User.js';
 import faqsRoute from './routes/Faqs.js';
 import itemsRoute from './routes/Items.js';
@@ -16,7 +17,7 @@ import AdminItemsRoute from "./routes/admins/Items.js";
 const app = express();
 const corsOptions = {
     origin: 'http://localhost:3000',
-    credentials: true,            //access-control-allow-credentials:true
+    credentials: true, //access-control-allow-credentials:true
     optionSuccessStatus: 200
 }
 dotenv.config();
@@ -31,6 +32,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 //routes 
+app.use('/api/auth', authRoute)
 app.use('/api/users', usersRoute)
 app.use('/api/faqs', faqsRoute)
 app.use('/api/items', itemsRoute)

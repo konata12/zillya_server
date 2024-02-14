@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+// SCHEMAS
+import { BasketSchema } from './Basket.js'
+
 const SessionSchema = new mongoose.Schema(
     {
         AccessToken: {
@@ -15,7 +18,7 @@ const SessionSchema = new mongoose.Schema(
             required: true
         },
         basket: {
-            type: Array,
+            type: [BasketSchema],
             required: false
         },
         isLoggedIn: {

@@ -1,20 +1,11 @@
 import { Router } from 'express';
-import { VerificateEmail, Register, Login, GetSession, updateInfo, Logout } from '../controllers/User.js';
-import { checkAuth } from '../utils/checkAuth.js';
+import { UpdateInfo, addItemToBasket } from '../controllers/User.js';
 
 
 const router = new Router()
 
-router.post('/', VerificateEmail)
+router.patch('/user/edit', UpdateInfo)
 
-router.get('/register/:id', Register)
-
-router.post('/login', Login)
-
-router.post('/logout', Logout)
-
-router.get('/user', GetSession)
-
-router.patch('/user/edit', updateInfo)
+router.patch('/user/addItemToBasket', addItemToBasket)
 
 export default router
