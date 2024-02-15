@@ -4,6 +4,7 @@ import {
   createDateForCookie,
   setAddressToUserResponse,
   getAddress,
+  validateCookies,
   setSessionLoggedInFalse,
   decodeAccessToken
 } from '../services/Default.service.js'
@@ -230,27 +231,8 @@ export const GetSession = async (req, res) => {
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
 
-    // if there aren't tokens return
-    if (AccessToken === undefined || RefreshToken === undefined) {
-      return res.status(401).json({
-        message: 'access to session denied'
-      })
-    }
-
-    // get access token data
-    const decodedAccessToken = decodeAccessToken(AccessToken)
-
-    // check if access token expired
-    // then set session is logged in false
-    if (Date.now() > decodedAccessToken.exp * 1000) {
-      console.log('token expired')
-      await setSessionLoggedInFalse(RefreshToken)
-
-      res.clearCookie('AccessToken');
-      return res.status(401).json({
-        message: 'access to session denied'
-      })
-    }
+    const cookieIsValid = await validateCookies(res, AccessToken, RefreshToken)
+    if (!cookieIsValid) return
 
     // if token doesn't expired then refresh him
     const sessionAfterRefreshing = await refreshSessionAccessToken(RefreshToken)
@@ -290,3 +272,25 @@ export const GetSession = async (req, res) => {
     })
   }
 }
+
+// // if there aren't tokens return
+// if (AccessToken === undefined || RefreshToken === undefined) {
+//   return res.status(401).json({
+//     message: 'access to session denied'
+//   })
+// }
+
+// // get access token data
+// const decodedAccessToken = decodeAccessToken(AccessToken)
+
+// // check if access token expired
+// // then set session is logged in false
+// if (Date.now() > decodedAccessToken.exp * 1000) {
+//   console.log('token expired')
+//   await setSessionLoggedInFalse(RefreshToken)
+
+//   res.clearCookie('AccessToken');
+//   return res.status(401).json({
+//     message: 'access to session denied'
+//   })
+// }

@@ -27,29 +27,9 @@ export const UpdateInfo = async (req, res) => {
         })
 
         const cookieIsValid = await validateCookies(res, AccessToken, RefreshToken)
-
+        console.log(1)
         if (!cookieIsValid) return
-
-        // // if there aren't tokens return
-        // if (AccessToken === undefined || RefreshToken === undefined) {
-        //     return res.status(401).json({
-        //         message: 'access denied'
-        //     })
-        // }
-
-        // // get access token data
-        // const decodedAccessToken = decodeAccessToken(AccessToken)
-
-        // // check if access token expired
-        // // then set session is logged in false
-        // if (Date.now() > decodedAccessToken.exp * 1000) {
-        //     console.log('token expired')
-
-        //     await setSessionLoggedInFalse(RefreshToken)
-        //     return res.status(401).json({
-        //         message: 'access denied'
-        //     })
-        // }
+        console.log(2)
 
         // update user and user data
         const { user, address } = await editUserData(userData, AccessToken)
