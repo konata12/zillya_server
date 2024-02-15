@@ -106,15 +106,16 @@ const checkForTokens = async (res, AccessToken, RefreshToken) => {
 }
 
 const checkTokenExpiration = async (res, tokenData, RefreshToken) => {
+    // if expired
     if (Date.now() > tokenData.exp * 1000) {
-        console.log('token expired')
-
         await setSessionLoggedInFalse(res, RefreshToken)
         res.status(401).json({
             message: 'access denied 3'
         })
+        
         return true
     }
+
     return false
 }
 
