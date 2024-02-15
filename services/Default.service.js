@@ -16,8 +16,7 @@ export const generateAccessToken = (data, expiresIn) => {
 
 export const decodeAccessToken = async (res, AccessToken, RefreshToken) => {
     try {
-        const decoded = jwt.verify(AccessToken, process.env.JWT_SECRET)
-        console.log(decoded)
+        const decoded = jwt.decode(AccessToken, process.env.JWT_SECRET)
 
         // if can't decode throw error
         if (!decoded) throw new Error("can't decode")
@@ -82,7 +81,6 @@ export const setAddressToUserResponse = (user, address) => {
 // clear AccessToken from cookies and logout session
 export const setSessionLoggedInFalse = async (res, RefreshToken) => {
     try {
-        console.log('anus')
         res.clearCookie('AccessToken')
         return await Session.findOneAndUpdate({ RefreshToken }, {
             isLoggedIn: false
