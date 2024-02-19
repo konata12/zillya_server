@@ -1,11 +1,21 @@
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 
 // MODELS
-import User from '../models/User.js'
 import Session from '../models/Session.js'
 import Address from '../models/Address.js'
+import Basket from '../models/Basket.js'
+import Items from '../models/Items.js'
 
 // SERVICES
+export const stringToObjectId = (str) => {
+    return new mongoose.Types.ObjectId(str)
+}
+
+const bsonObjectToJs = (obj) => {
+    return JSON.parse(JSON.stringify(obj))
+}
+
 export const generateAccessToken = (data, expiresIn) => {
     const dataJWT = { token: data }
     const expiration = expiresIn !== 'none' ?
@@ -34,12 +44,20 @@ export const decodeAccessToken = async (res, AccessToken, RefreshToken) => {
     }
 }
 
+export const getSessionByToken = async (AccessToken) => {
+    return await Session.findOne({ AccessToken: AccessToken })
+}
+
 export const createDateForCookie = (date) => {
     return new Date((Date.now() + date))
 }
 
 export const getAddress = async (user) => {
     return await Address.findOne({ _id: user.address })
+}
+
+export const getBasket = async (basketId) => {
+    return await Basket.findOne({ _id: basketId })
 }
 
 export const removeEmptyValues = (obj) => {
@@ -73,9 +91,57 @@ export const setAddressToUserResponse = (user, address) => {
     const addresRes = checkAddress(cloneAddress)
 
     userRes.address = addresRes
-    console.log('res user', userRes)
 
     return userRes
+}
+
+export const setBasketResponse = async (basketId) => {
+    const basket = bsonObjectToJs(await getBasket(basketId))
+
+    // array of basket products ids
+    const choiceIdArray = basket.products.map((product) => {
+        return stringToObjectId(product.product)
+    })
+
+    // get items from basket
+    const basketProductsBSON = await Items.find({
+        choice: {
+            $elemMatch: {
+                _id: {
+                    $in: choiceIdArray
+                }
+            }
+        }
+    })
+
+    // convert bson items to js
+    const basketProductsJS = basketProductsBSON.map((product) => {
+        return bsonObjectToJs(product)
+    })
+
+    // set product to object, not id
+    basket.products = basket.products.map((product) => {
+        // id of product from basket
+        const choiceId = product.product
+
+        // cycle through array of items
+        for (const item of basketProductsJS) {
+            // returns true if items choice contains product from basket
+            const itemContainsChoice = item.choice.find((choice) => {
+                return choice._id === choiceId
+            })
+
+            if (itemContainsChoice) {
+                // set data to product
+                product.product = item
+                product.product.choiceId = choiceId
+            }
+        }
+
+        return product
+    })
+
+    return basket
 }
 
 // clear AccessToken from cookies and logout session
@@ -112,7 +178,7 @@ const checkTokenExpiration = async (res, tokenData, RefreshToken) => {
         res.status(401).json({
             message: 'access denied 3'
         })
-        
+
         return true
     }
 
@@ -130,7 +196,7 @@ export const validateCookies = async (res, AccessToken, RefreshToken) => {
 
     // if access token expired return, logout
     const tokenExpired = await checkTokenExpiration(res, decodedAccessToken, RefreshToken)
-    if(tokenExpired) return false //works
+    if (tokenExpired) return false //works
 
     return true
 }

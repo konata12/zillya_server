@@ -4,9 +4,9 @@ import {
   createDateForCookie,
   setAddressToUserResponse,
   getAddress,
+  getBasket,
   validateCookies,
-  setSessionLoggedInFalse,
-  decodeAccessToken
+  setBasketResponse,
 } from '../services/Default.service.js'
 
 // auth
@@ -21,7 +21,7 @@ import {
   sendVerificationEmail,
 
   // REGISTER
-  getSession,
+  getSessionById,
   getUserFromSession,
   activateUser,
 
@@ -66,7 +66,7 @@ export const VerificateEmail = async (req, res) => {
 
     // create session
     const userId = user._id
-    const session = createSessionForVerification(userId)
+    const session = await createSessionForVerification(userId)
 
     // save session
     await session.save()
@@ -99,7 +99,7 @@ export const Register = async (req, res) => {
     const sessionId = req.params.id
 
     // get session
-    const session = await getSession(sessionId)
+    const session = await getSessionById(sessionId)
 
     // get user
     const user = await getUserFromSession(session)
@@ -169,6 +169,9 @@ export const Login = async (req, res) => {
     // set in session isLogged true
     const session = await getLoginSessionByUserId(user._id)
 
+    // get basket
+    const basket = await setBasketResponse(session.basket)
+
     // get address
     const address = await getAddress(user)
 
@@ -195,7 +198,7 @@ export const Login = async (req, res) => {
     })
 
     return res.status(200).json({
-      session: session,
+      basket: basket,
       user: userRes,
       message: 'You successfully entered the system',
     })
@@ -231,11 +234,15 @@ export const GetSession = async (req, res) => {
     // get tokens
     const { AccessToken, RefreshToken } = req.cookies
 
+    // cookie validation
     const cookieIsValid = await validateCookies(res, AccessToken, RefreshToken)
     if (!cookieIsValid) return
 
     // if token doesn't expired then refresh him
     const sessionAfterRefreshing = await refreshSessionAccessToken(RefreshToken)
+
+    // get basket
+    const basket = await setBasketResponse(sessionAfterRefreshing.basket)
 
     // get user
     const user = await getUserFromSession(sessionAfterRefreshing)
@@ -258,7 +265,7 @@ export const GetSession = async (req, res) => {
     })
 
     res.status(200).json({
-      session: sessionAfterRefreshing,
+      basket: basket,
       user: userRes,
       message: 'succesfully get user session and data',
     })
@@ -266,31 +273,9 @@ export const GetSession = async (req, res) => {
   catch (error) {
     console.log(error);
 
-    res.clearCookie('AccessToken');
+    // res.clearCookie('AccessToken');
     res.status(500).json({
       message: 'access to session denied',
     })
   }
 }
-
-// // if there aren't tokens return
-// if (AccessToken === undefined || RefreshToken === undefined) {
-//   return res.status(401).json({
-//     message: 'access to session denied'
-//   })
-// }
-
-// // get access token data
-// const decodedAccessToken = decodeAccessToken(AccessToken)
-
-// // check if access token expired
-// // then set session is logged in false
-// if (Date.now() > decodedAccessToken.exp * 1000) {
-//   console.log('token expired')
-//   await setSessionLoggedInFalse(RefreshToken)
-
-//   res.clearCookie('AccessToken');
-//   return res.status(401).json({
-//     message: 'access to session denied'
-//   })
-// }

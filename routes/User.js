@@ -6,6 +6,6 @@ const router = new Router()
 
 router.patch('/user/edit', UpdateInfo)
 
-router.patch('/user/addItemToBasket', addItemToBasket)
+router.patch('/basket/add', addItemToBasket)
 
 export default router

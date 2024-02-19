@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs'
 import User from '../models/User.js'
 import Session from '../models/Session.js'
 import Address from '../models/Address.js'
+import Basket from '../models/Basket.js'
 
 // SERVICES
 import {
@@ -39,15 +40,23 @@ export const createUserAddress = () => {
     return new Address({})
 }
 
-export const createSessionForVerification = (userId) => {
+const createBasket = async () => {
+    const basket = new Basket()
+    await basket.save()
 
+    return basket
+}
+
+export const createSessionForVerification = async (userId) => {
     const AccessToken = generateAccessToken(uuidv4(), '1d')
     const RefreshToken = generateAccessToken(uuidv4(), 'none')
+    const basket = await createBasket()
+
     return new Session({
         AccessToken,
         RefreshToken,
         userId,
-        basket: [],
+        basket: basket,
         isLoggedIn: false
     })
 }
@@ -80,7 +89,7 @@ export const sendVerificationEmail = async (transporter, sessionId, email) => {
 }
 
 // REGISTER
-export const getSession = async (sessionId) => {
+export const getSessionById = async (sessionId) => {
     return await Session.findOne({ _id: sessionId })
 }
 

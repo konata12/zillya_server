@@ -3,6 +3,7 @@
 import {
     removeEmptyValues,
     setAddressToUserResponse,
+    setBasketResponse,
     validateCookies,
 } from '../services/Default.service.js'
 
@@ -10,6 +11,9 @@ import {
 import {
     // EDIT USER DATA
     editUserData,
+
+    // ADD ITEM TO BASKET
+    addItemToBasketService,
 } from '../services/User.service.js'
 
 // edit user data
@@ -27,9 +31,7 @@ export const UpdateInfo = async (req, res) => {
         })
 
         const cookieIsValid = await validateCookies(res, AccessToken, RefreshToken)
-        console.log(1)
         if (!cookieIsValid) return
-        console.log(2)
 
         // update user and user data
         const { user, address } = await editUserData(userData, AccessToken)
@@ -53,7 +55,23 @@ export const UpdateInfo = async (req, res) => {
 // add item to basket
 export const addItemToBasket = async (req, res) => {
     try {
+        console.log('add item to basket')
+        const { AccessToken, RefreshToken } = req.cookies
+        const { itemChoice, quantity } = req.body
 
+        const cookieIsValid = await validateCookies(res, AccessToken, RefreshToken)
+        if (!cookieIsValid) return
+
+        // push item to basket
+        const basket = await addItemToBasketService(itemChoice, quantity, AccessToken)
+
+        // set basket response data
+        const basketRes = await setBasketResponse(basket._id)
+
+        res.status(200).json({
+            basket: basketRes,
+            message: 'product added to basket'
+        })
     } catch (error) {
         console.log(error);
         res.status(500).json({
